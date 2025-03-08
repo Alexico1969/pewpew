@@ -33,6 +33,24 @@ def show_start_screen(screen):
     pygame.display.flip()
     wait_for_key()
 
+def show_instruction_screen(screen):
+    screen.fill(BLACK)
+    draw_text(screen, "Instructions", 64, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4, WHITE)
+    draw_text(screen, "Use the arrow keys to move the spaceship", 24, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, WHITE)
+    draw_text(screen, "Press the space bar to shoot", 24, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 40, WHITE)
+    
+    # Load and display the player's ship and enemy sprites
+    player_ship_image = load_scaled_image('assets/player.png', 1.5)  # Scale factor of 1.5 for a larger image
+    player_ship_rect = player_ship_image.get_rect(center=(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 100))
+    screen.blit(player_ship_image, player_ship_rect)
+    
+    enemy_image = load_scaled_image('assets/enemy.png', 1.5)  # Scale factor of 1.5 for a larger image
+    enemy_rect = enemy_image.get_rect(center=(SCREEN_WIDTH // 2 + 100, SCREEN_HEIGHT // 2 + 100))
+    screen.blit(enemy_image, enemy_rect)
+    
+    pygame.display.flip()
+    wait_for_key()
+
 def wait_for_key():
     waiting = True
     while waiting:
@@ -49,6 +67,7 @@ def main():
     pygame.display.set_caption("Vertical Space Shooter")
     
     show_start_screen(screen)
+    show_instruction_screen(screen)
     
     clock = pygame.time.Clock()
     player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)  # Provide initial x and y positions
