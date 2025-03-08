@@ -1,65 +1,10 @@
 import pygame
 import random
-from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, INITIAL_SCORE, INITIAL_LIVES, INITIAL_LEVEL, WHITE, BLACK, ENEMY_SPEED
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, INITIAL_SCORE, INITIAL_LIVES, INITIAL_LEVEL, ENEMY_SPEED, WHITE
 from player import Player
 from enemy import Enemy
 from bullet import Bullet
-
-def draw_text(screen, text, size, x, y, color):
-    font = pygame.font.Font(pygame.font.get_default_font(), size)
-    text_surface = font.render(text, True, color)
-    text_rect = text_surface.get_rect()
-    text_rect.midtop = (x, y)
-    screen.blit(text_surface, text_rect)
-
-def load_scaled_image(image_path, scale_factor):
-    image = pygame.image.load(image_path).convert_alpha()
-    width, height = image.get_size()
-    scaled_image = pygame.transform.scale(image, (int(width * scale_factor), int(height * scale_factor)))
-    return scaled_image
-
-def show_start_screen(screen):
-    screen.fill(BLACK)
-    draw_text(screen, "Pew Pew", 64, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4, WHITE)
-    draw_text(screen, "By Alex van Winkel", 24, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, WHITE)
-    draw_text(screen, "Press any key to start", 18, SCREEN_WIDTH // 2, SCREEN_HEIGHT * 3 // 4, WHITE)
-    draw_text(screen, f"Level: {INITIAL_LEVEL}", 18, SCREEN_WIDTH // 2, SCREEN_HEIGHT * 3 // 4 + 30, WHITE)
-    
-    # Load and display the scaled player's ship image
-    player_ship_image = load_scaled_image('assets/player.png', 2)  # Scale factor of 2 for a larger image
-    player_ship_rect = player_ship_image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + player_ship_image.get_height() + 20))
-    screen.blit(player_ship_image, player_ship_rect)
-    
-    pygame.display.flip()
-    wait_for_key()
-
-def show_instruction_screen(screen):
-    screen.fill(BLACK)
-    draw_text(screen, "Instructions", 64, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4, WHITE)
-    draw_text(screen, "Use the arrow keys to move the spaceship", 24, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, WHITE)
-    draw_text(screen, "Press the space bar to shoot", 24, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 40, WHITE)
-    
-    # Load and display the player's ship and enemy sprites
-    player_ship_image = load_scaled_image('assets/player.png', 1.5)  # Scale factor of 1.5 for a larger image
-    player_ship_rect = player_ship_image.get_rect(center=(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 100))
-    screen.blit(player_ship_image, player_ship_rect)
-    
-    enemy_image = load_scaled_image('assets/enemy.png', 1.5)  # Scale factor of 1.5 for a larger image
-    enemy_rect = enemy_image.get_rect(center=(SCREEN_WIDTH // 2 + 100, SCREEN_HEIGHT // 2 + 100))
-    screen.blit(enemy_image, enemy_rect)
-    
-    pygame.display.flip()
-    wait_for_key()
-
-def wait_for_key():
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            if event.type == pygame.KEYUP:
-                waiting = False
+from helpers import draw_text, load_scaled_image, show_start_screen, show_instruction_screen, show_level_screen, show_game_over_screen, wait_for_key, create_enemies
 
 def main():
     pygame.init()
@@ -71,12 +16,12 @@ def main():
     
     clock = pygame.time.Clock()
     player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)  # Provide initial x and y positions
-    enemies = [Enemy(x, 50) for x in range(100, SCREEN_WIDTH - 100, 100)]  # Create a list of enemies with initial positions
+    level = INITIAL_LEVEL
+    enemies = create_enemies(level)
     bullets = []
     
     score = INITIAL_SCORE
     lives = INITIAL_LIVES
-    level = INITIAL_LEVEL
     enemy_timer = 0
     enemy_interval = 1000  # Time in milliseconds between enemy spawns
     fast_enemy = None
@@ -114,8 +59,9 @@ def main():
             # Check for collision with player
             if enemy.rect.colliderect(player.rect):
                 lives -= 1
-                enemies.remove(enemy)
+                enemies = create_enemies(level)  # Restart the level
                 if lives <= 0:
+                    show_game_over_screen(screen, level, score)
                     running = False
             # Reset enemy position if it moves off the screen
             if enemy.rect.top > SCREEN_HEIGHT:
@@ -130,6 +76,13 @@ def main():
                     bullets.remove(bullet)
                     enemies.remove(enemy)
                     break
+
+        # Check if all enemies are shot down
+        if not enemies:
+            level += 1
+            score += 500  # Bonus points for leveling up
+            show_level_screen(screen, level)
+            enemies = create_enemies(level)
         
         screen.fill((0, 0, 0))  # Clear the screen
         player.draw(screen)
