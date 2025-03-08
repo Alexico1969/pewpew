@@ -1,8 +1,15 @@
 import pygame
-from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, INITIAL_SCORE, INITIAL_LIVES, WHITE
 from player import Player
 from enemy import Enemy
 from bullet import Bullet
+
+def draw_text(screen, text, size, x, y, color):
+    font = pygame.font.Font(pygame.font.get_default_font(), size)
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    screen.blit(text_surface, text_rect)
 
 def main():
     pygame.init()
@@ -14,6 +21,8 @@ def main():
     enemies = [Enemy(x, 50) for x in range(100, SCREEN_WIDTH - 100, 100)]  # Create a list of enemies with initial positions
     bullets = []
     
+    score = INITIAL_SCORE
+    lives = INITIAL_LIVES
     running = True
     while running:
         for event in pygame.event.get():
@@ -33,6 +42,21 @@ def main():
 
         for enemy in enemies:
             enemy.move()
+            # Check for collision with player
+            if enemy.rect.colliderect(player.rect):
+                lives -= 1
+                enemies.remove(enemy)
+                if lives <= 0:
+                    running = False
+
+        # Check for collisions between bullets and enemies
+        for bullet in bullets:
+            for enemy in enemies:
+                if bullet.rect.colliderect(enemy.rect):
+                    score += 100
+                    bullets.remove(bullet)
+                    enemies.remove(enemy)
+                    break
         
         screen.fill((0, 0, 0))  # Clear the screen
         player.draw(screen)
@@ -41,6 +65,13 @@ def main():
         for bullet in bullets:
             bullet.draw(screen)
         
+        # Draw score
+        draw_text(screen, f"Score: {score:06}", 18, SCREEN_WIDTH // 2, 10, WHITE)
+        
+        # Draw lives
+        for i in range(lives):
+            screen.blit(player.image, (10 + i * 40, 10))
+
         pygame.display.flip()
         clock.tick(FPS)
 
