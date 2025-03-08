@@ -10,6 +10,7 @@ MAX_BULLETS = 5
 
 INITIAL_SCORE = 0
 INITIAL_LIVES = 3
+INITIAL_LEVEL = 1  # Add initial level
 
 # Colors
 BLACK = (0, 0, 0)
